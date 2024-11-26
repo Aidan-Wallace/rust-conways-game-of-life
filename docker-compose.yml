@@ -1,0 +1,30 @@
+version: "3.5"
+
+services:
+  server:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+
+  database:
+    container_name: postgres_container
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATA: /data/postgres
+      POSTGRES_DB: ${POSTGRES_DB:-test-db}
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
+    networks:
+      - postgres
+    restart: unless-stopped
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+  postgres:

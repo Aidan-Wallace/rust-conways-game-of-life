@@ -1,20 +1,32 @@
 mod gol;
+mod matrix;
 
-use rand::Rng;
-use std::{thread, time::Duration};
+use dotenv::dotenv;
+use matrix::Matrix;
+use std::{env, fs, path::Path, thread, time::Duration};
 
-const SIZE: u16 = 10;
+const DEFAULT_SIZE: u16 = 10;
 const SLEEP_TIME_MS: u64 = 600;
 
 fn main() {
-    let matrix = generate_default(SIZE, SIZE);
+    dotenv().ok();
+
+    let source_grid_path = env::var("SOURCE_GRID_PATH").unwrap_or("".to_string());
+
+    let matrix = {
+        if source_grid_path.is_empty() {
+            Matrix::generate_random_binary(DEFAULT_SIZE, DEFAULT_SIZE)
+        } else {
+            load_json(source_grid_path)
+        }
+    };
 
     game_loop(&matrix)
 }
 
-fn game_loop(matrix: &Vec<Vec<u8>>) -> ! {
+fn game_loop(matrix: &Matrix) -> ! {
     loop {
-        print(&matrix);
+        matrix.print();
 
         gol::convert(matrix);
 
@@ -22,47 +34,19 @@ fn game_loop(matrix: &Vec<Vec<u8>>) -> ! {
     }
 }
 
-fn generate_default(x: u16, y: u16) -> Vec<Vec<u8>> {
-    let mut rng = rand::thread_rng();
-    let mut matrix: Vec<Vec<u8>> = vec![];
+fn load_json(source_grid_path: String) -> Matrix {
+    let path = Path::new(&source_grid_path);
+    if path.exists() && path.is_file() {
+        let file_content = fs::read_to_string(path).expect("Unable to read the file");
 
-    for _ in 0..x {
-        let mut row: Vec<u8> = vec![];
+        let data: Vec<Vec<u8>> = serde_json::from_str(&file_content)
+            .expect("Unable to deserialize JSON into Vec<Vec<u8>>");
 
-        for _ in 0..y {
-            row.push(rng.gen_range(0..=1));
-        }
-
-        matrix.push(row);
+        Matrix::new(data)
+    } else {
+        panic!(
+            "The provided path is invalid or does not exist: {}",
+            source_grid_path
+        );
     }
-
-    matrix
-}
-
-fn print(matrix: &Vec<Vec<u8>>) {
-    let w = matrix.len();
-
-    // print top border
-    println!(" {}", "_".repeat(w * 2));
-
-    for i in matrix {
-        let mut s = String::new();
-
-        // print left side border for row
-        print!("|");
-
-        for j in i {
-            match j {
-                1 => s += "0 ",
-                0 => s += "  ",
-                _ => panic!(""),
-            }
-        }
-
-        // print row cells and right border for row
-        println!("{}|", s);
-    }
-
-    // print bottom border
-    println!("|{}|", "-".repeat(w * 2));
 }

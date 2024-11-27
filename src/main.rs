@@ -21,14 +21,16 @@ fn main() {
         }
     };
 
-    game_loop(&matrix)
+    game_loop(matrix)
 }
 
-fn game_loop(matrix: &Matrix) -> ! {
-    loop {
-        matrix.print();
+fn game_loop(matrix: Matrix) -> ! {
+    let mut gb: Matrix = matrix;
 
-        gol::convert(matrix);
+    loop {
+        gb.print();
+
+        gol::convert(&mut gb);
 
         thread::sleep(Duration::from_millis(SLEEP_TIME_MS));
     }

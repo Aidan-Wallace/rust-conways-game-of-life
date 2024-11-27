@@ -4,15 +4,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'proj'",
+            "name": "Debug executable 'game-of-life'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=proj",
-                    "--package=proj"
+                    "--bin=game-of-life",
+                    "--package=game-of-life"
                 ],
                 "filter": {
-                    "name": "proj",
+                    "name": "game-of-life",
                     "kind": "bin"
                 }
             },
@@ -22,16 +22,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'proj'",
+            "name": "Debug unit tests in executable 'game-of-life'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=proj",
-                    "--package=proj"
+                    "--bin=game-of-life",
+                    "--package=game-of-life"
                 ],
                 "filter": {
-                    "name": "proj",
+                    "name": "game-of-life",
                     "kind": "bin"
                 }
             },

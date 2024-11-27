@@ -9,6 +9,6 @@ RUN cargo build --release
 
 FROM gcr.io/distroless/cc-debian12
 
-COPY --from=build-env /app/target/release/r /
+COPY --from=build-env /app/target/release/game-of-life /
 
-ENTRYPOINT ["./r"]
+ENTRYPOINT ["./game-of-life"]

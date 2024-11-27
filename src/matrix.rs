@@ -37,6 +37,14 @@ impl Matrix {
         Matrix { data: matrix }
     }
 
+    pub fn get_value(&self, x: usize, y: usize) -> Option<u8> {
+        if x < self.data.len() && y < self.data[0].len() {
+            Some(self.data[y][x])
+        } else {
+            None
+        }
+    }
+
     pub fn get_bordering_cells(&self, x: usize, y: usize) -> Vec<u8> {
         let mut neighbors = Vec::new();
         let rows = self.data.len();
@@ -50,6 +58,7 @@ impl Matrix {
             if new_x >= 0 && new_y >= 0 && new_x < rows as isize && new_y < cols as isize {
                 neighbors.push(self.data[new_y as usize][new_x as usize]);
             }
+
         }
 
         neighbors
@@ -69,7 +78,7 @@ impl Matrix {
 
             for j in i {
                 match j {
-                    1 => s += "0 ",
+                    1 => s += "█ ",
                     0 => s += "  ",
                     _ => panic!(""),
                 }

@@ -1,4 +1,6 @@
-use crate::matrix::Matrix;
+pub mod matrix;
+
+use matrix::Matrix;
 
 pub fn convert(source_matrix: &mut Matrix) {
     let cop = Matrix::new(source_matrix.data.clone());

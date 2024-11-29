@@ -1,0 +1,9 @@
+[package]
+name = "console"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dotenv = "0.15.0"
+serde_json = "1.0.133"
+game-of-life = { path = "../game-of-life/" }

@@ -1,8 +1,5 @@
-mod gol;
-mod matrix;
-
 use dotenv::dotenv;
-use matrix::Matrix;
+use game_of_life::matrix::Matrix;
 use std::{env, fs, path::Path, thread, time::Duration};
 
 const DEFAULT_SIZE: u16 = 10;
@@ -43,7 +40,7 @@ fn game_loop(matrix: Matrix, sleep_time: u64) -> ! {
     loop {
         gb.print();
 
-        gol::convert(&mut gb);
+        game_of_life::convert(&mut gb);
 
         thread::sleep(Duration::from_millis(sleep_time));
     }

@@ -1,9 +1,5 @@
-[package]
-name = "game-of-life"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-dotenv = "0.15.0"
-rand = "0.8.5"
-serde_json = "1.0.133"
+[workspace]
+members = [
+    "game-of-life",
+    "console"
+]

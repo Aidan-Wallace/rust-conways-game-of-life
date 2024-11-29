@@ -58,38 +58,38 @@ impl Matrix {
             if new_x >= 0 && new_y >= 0 && new_x < rows as isize && new_y < cols as isize {
                 neighbors.push(self.data[new_y as usize][new_x as usize]);
             }
-
         }
 
         neighbors
     }
 
     pub fn print(&self) {
+        print!("\x1B[2J\x1B[H");
         let w = self.data.len();
 
         // print top border
-        println!(" {}", "_".repeat(w * 2));
+        println!("┏{}┓", "━".repeat(w * 2));
 
         for i in self.data.clone() {
             let mut s = String::new();
 
             // print left side border for row
-            print!("|");
+            print!("┃");
 
             for j in i {
                 match j {
-                    1 => s += "█ ",
+                    1 => s += "■ ",
                     0 => s += "  ",
                     _ => panic!(""),
                 }
             }
 
             // print row cells and right border for row
-            println!("{}|", s);
+            println!("{}┃", s);
         }
 
         // print bottom border
-        println!("|{}|", "-".repeat(w * 2));
+        println!("┗{}┛", "━".repeat(w * 2));
     }
 }
 

@@ -1,5 +1,3 @@
-// struct DetermineLater{living_neighbors:usize,dead_neighbors:usize}impl DetermineLater{fn new(_:&Vec<Vec<u8>>)->Self{Self{living_neighbors:0,dead_neighbors:0}}}
-
 use crate::matrix::Matrix;
 
 pub fn convert(source_matrix: &mut Matrix) {

@@ -4,15 +4,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'game-of-life'",
+            "name": "Debug executable 'console'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=game-of-life",
-                    "--package=game-of-life"
+                    "--bin=console",
+                    "--package=console"
                 ],
                 "filter": {
-                    "name": "game-of-life",
+                    "name": "console",
                     "kind": "bin"
                 }
             },
@@ -22,16 +22,34 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'game-of-life'",
+            "name": "Debug executable 'api'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=api",
+                    "--package=api"
+                ],
+                "filter": {
+                    "name": "api",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'console'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=game-of-life",
-                    "--package=game-of-life"
+                    "--bin=console",
+                    "--package=console"
                 ],
                 "filter": {
-                    "name": "game-of-life",
+                    "name": "console",
                     "kind": "bin"
                 }
             },

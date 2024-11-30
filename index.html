@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Conways Game of Life</title>
+		<style>
+			:root {
+				--cell-size: 20px;
+			}
+
+			body {
+				box-sizing: border-box;
+				padding: 0;
+				margin: 0;
+			}
+
+			content.board-wrapper {
+				display: flex;
+				justify-self: center;
+				align-items: center;
+				height: 100vh;
+			}
+
+			#board {
+				border: 1px solid;
+				width: fit-content;
+			}
+
+			.row {
+				display: flex;
+				flex-direction: row;
+			}
+
+			.cell {
+				width: var(--cell-size);
+				height: var(--cell-size);
+				border: 1px solid;
+			}
+
+			.alive {
+				background-color: #000;
+			}
+		</style>
+	</head>
+	<body>
+		<content class="board-wrapper">
+			<div id="board"></div>
+		</content>
+	</body>
+	<script>
+		const size = 10;
+		const sleepTime = 400;
+		const checkRoute = "http://localhost:8080/check";
+		const generateRoute = "http://localhost:8080/generate-random";
+
+		const board = document.getElementById("board");
+
+		var matrix = [];
+
+		function draw() {
+			board.innerHTML = "";
+
+			for (var i = 0; i < matrix.length; i++) {
+				var row = document.createElement("div");
+				row.classList.add("row");
+
+				for (var j = 0; j < matrix[i].length; j++) {
+					var el = document.createElement("div");
+					el.classList.add("cell");
+
+					if (matrix[i][j] == 1) el.classList.add("alive");
+
+					row.appendChild(el);
+				}
+
+				board.appendChild(row);
+			}
+		}
+
+		function configure() {
+			var route = `${generateRoute}?width=${size}&height=${size}`;
+
+			fetch(route)
+				.then((x) => x.json())
+				.then((y) => {
+					matrix = y;
+					draw();
+				})
+				.catch((e) => console.error(e));
+			draw();
+		}
+
+		function update() {
+			fetch(checkRoute, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(matrix),
+			})
+				.then((x) => x.json())
+				.then((y) => {
+					matrix = y;
+					draw();
+				})
+				.catch((e) => console.error(e));
+		}
+
+		configure();
+
+		setInterval(() => {
+			update();
+		}, sleepTime);
+	</script>
+</html>

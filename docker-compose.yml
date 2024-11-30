@@ -3,8 +3,10 @@ version: "3.5"
 services:
   server:
     build:
-      dockerfile: ./Dockerfile
+      dockerfile: ./api/Dockerfile
       context: .
+    ports:
+      - 8080:80
 
   database:
     container_name: postgres_container

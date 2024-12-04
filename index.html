@@ -15,6 +15,17 @@
 				margin: 0;
 			}
 
+			.btn {
+				padding: 10px;
+				border: 1px solid;
+				text-align: center;
+				border-radius: 16px;
+				cursor: pointer;
+				-webkit-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+
 			content.board-wrapper {
 				display: flex;
 				justify-self: center;
@@ -41,25 +52,113 @@
 			.alive {
 				background-color: #000;
 			}
+
+			#controller {
+				margin-left: 10vw;
+				display: flex;
+				flex-direction: column;
+				border: 1px solid;
+				padding: 50px;
+			}
+
+			.controller-section {
+				margin-top: 20px;
+			}
+
+			#presets-controller-section {
+				display: flex;
+				flex-direction: column;
+			}
 		</style>
 	</head>
 	<body>
+		<h1>Conways Game of Life</h1>
+
 		<content class="board-wrapper">
 			<div id="board"></div>
+
+			<div id="controller">
+				<span class="controller-section" id="presets-controller-section">
+					presets
+					<select name="presets" id="presets">
+						<option value="null">Select a Preset</option>
+						<option value="random">Random</option>
+					</select>
+				</span>
+
+				<span class="controller-section">
+					<input type="checkbox" name="use-toroidal" id="use-toroidal" />
+					<label for="use-toroidal">Use Toroidal</label>
+				</span>
+
+				<span class="controller-section">
+					<input type="number" name="speed" id="speed" value="400" />
+					<label for="speed">Speed (ms)</label>
+				</span>
+
+				<span class="controller-section">
+					<div id="start-stop-button" class="btn">start/stop</div>
+					<div id="step-button" class="btn">step</div>
+					<div id="clear-button" class="btn">clear</div>
+				</span>
+			</div>
 		</content>
 	</body>
 	<script>
-		const size = 10;
+		const size = 20;
 		const sleepTime = 400;
-		const checkRoute = "http://localhost:8080/check?use_toroidal=true";
+		const checkRoute = "http://localhost:8080/check";
 		const generateRoute = "http://localhost:8080/generate-random";
+		const getPresetsRoute = "http://localhost:8080/get-presets";
 
-		const board = document.getElementById("board");
+		const boardEl = document.getElementById("board");
+		const presetsEl = document.getElementById("presets");
+		const startStopBtnEl = document.getElementById("start-stop-button");
+		const speedEl = document.getElementById("speed");
+		const useToroidalEl = document.getElementById("use-toroidal");
+		const stepBtnEl = document.getElementById("step-button");
+		const clearBtnEl = document.getElementById("clear-button");
 
 		var matrix = [];
+		var presets = [];
+		var isRunning = false;
+		var speed = 400;
+		let intervalId;
+		let useToroidal = false;
+
+		startStopBtnEl.addEventListener("click", (e) => {
+			console.log("start stop button clicked");
+			e.preventDefault();
+			isRunning = !isRunning;
+		});
+
+		speedEl.addEventListener("change", (e) => {
+			console.log("update speed changed");
+			clearInterval(intervalId);
+			speed = e.target.value;
+			startLoop();
+		});
+
+		useToroidalEl.addEventListener("change", (e) => {
+			console.log("use-toroidal button clicked");
+			useToroidal = e.target.checked;
+		});
+
+		stepBtnEl.addEventListener("click", (e) => {
+			console.log("step button clicked");
+			e.preventDefault();
+			update();
+		});
+
+		clearBtnEl.addEventListener("click", (e) => {
+			console.log("clear button clicked");
+			e.preventDefault();
+			clearMatrix();
+			draw();
+		});
 
 		function draw() {
-			board.innerHTML = "";
+			boardEl.innerHTML = "";
 
 			for (var i = 0; i < matrix.length; i++) {
 				var row = document.createElement("div");
@@ -74,7 +173,7 @@
 					row.appendChild(el);
 				}
 
-				board.appendChild(row);
+				boardEl.appendChild(row);
 			}
 		}
 
@@ -88,11 +187,57 @@
 					draw();
 				})
 				.catch((e) => console.error(e));
-			draw();
+
+			fetch(getPresetsRoute)
+				.then((x) => x.json())
+				.then((y) => {
+					presets = y;
+
+					console.log(presets);
+
+					for (var i = 0; i < presets.length; i++) {
+						var el = document.createElement("option");
+
+						el.value = presets[i].id;
+						el.innerText = presets[i].displayName;
+
+						presetsEl.appendChild(el);
+					}
+
+					presetsEl.addEventListener("change", () => {
+						console.log(presetsEl.value);
+
+						if (presetsEl == "random") {
+						}
+
+						var target = presets.find((x) => x.id == presetsEl.value).matrix;
+
+						const startX = Math.floor((matrix.length - target.length) / 2);
+						const startY = Math.floor(
+							(matrix[0].length - target[0].length) / 2
+						);
+
+						clearMatrix();
+
+						for (let i = 0; i < target.length; i++)
+							for (let j = 0; j < target[i].length; j++)
+								matrix[startX + i][startY + j] = target[i][j];
+
+						draw();
+					});
+				})
+				.catch((e) => console.error(e));
+		}
+
+		function clearMatrix() {
+			for (var i = 0; i < matrix.length; i++)
+				for (var j = 0; j < matrix[i].length; j++) matrix[i][j] = 0;
 		}
 
 		function update() {
-			fetch(checkRoute, {
+			var route = `${checkRoute}?use_toroidal=${useToroidal}`;
+			console.log(route);
+			fetch(route, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -107,10 +252,13 @@
 				.catch((e) => console.error(e));
 		}
 
-		configure();
+		function startLoop() {
+			intervalId = setInterval(() => {
+				if (isRunning) update();
+			}, speed);
+		}
 
-		setInterval(() => {
-			update();
-		}, sleepTime);
+		configure();
+		startLoop();
 	</script>
 </html>

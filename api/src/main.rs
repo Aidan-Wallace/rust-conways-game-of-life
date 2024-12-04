@@ -1,10 +1,10 @@
 mod data;
 
 use actix_cors::Cors;
-use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
-use data::{AppState, CheckGameBoardOptions, GenerateRandom, InputData};
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use data::{AppState, CheckGameBoardOptions, GenerateRandom, GolPreset, InputData};
 use game_of_life::matrix;
-use std::{env, fs};
+use std::{env, fs, path::Path};
 
 const HOST: &str = "127.0.0.1";
 const DEFAULT_PORT: u16 = 8080;
@@ -34,9 +34,10 @@ async fn main() -> std::io::Result<()> {
                     }
                 },
             }))
-            .route("/", web::get().to(index))
-            .route("/generate-random", web::get().to(generate_random))
+            .service(index)
+            .service(generate_random)
             .service(update_board)
+            .service(get_presets)
     })
     .bind((host, port))?
     .run()
@@ -56,14 +57,37 @@ async fn update_board(
     web::Json(matrix.data)
 }
 
+#[get("/get-presets")]
+async fn get_presets() -> impl Responder {
+    let data = load_json("presets.json".to_string());
+
+    web::Json(data)
+}
+
+#[get("/generate-random")]
 async fn generate_random(query: web::Query<GenerateRandom>) -> impl Responder {
     let result = matrix::Matrix::generate_random_binary(query.width, query.height);
 
     web::Json(result.data)
 }
 
+#[get("/")]
 async fn index(data: web::Data<AppState>) -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html")
         .body(data.html.clone())
+}
+
+fn load_json(fp: String) -> Vec<GolPreset> {
+    let path = Path::new(&fp);
+    if path.exists() && path.is_file() {
+        let file_content = fs::read_to_string(path).expect("Unable to read the file");
+
+        let data: Vec<GolPreset> = serde_json::from_str(&file_content)
+            .expect("Unable to deserialize JSON into Vec<GolPreset>");
+
+        data
+    } else {
+        panic!("The provided path is invalid or does not exist: {}", fp);
+    }
 }

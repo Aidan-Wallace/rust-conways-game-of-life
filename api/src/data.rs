@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub struct AppState {
     pub html: String,
@@ -13,6 +13,14 @@ pub struct GenerateRandom {
 #[derive(Deserialize)]
 pub struct CheckGameBoardOptions {
     pub use_toroidal: Option<bool>,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GolPreset {
+    pub display_name: String,
+    pub id: String,
+    pub matrix: Vec<Vec<u8>>,
 }
 
 #[derive(Deserialize)]

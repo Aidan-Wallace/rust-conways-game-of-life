@@ -10,6 +10,7 @@
 			href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
 			rel="stylesheet"
 		/>
+		<link rel="icon" type="image/x-icon" href="favicon.ico" />
 		<style>
 			:root {
 				--cell-size: 20px;
@@ -20,6 +21,7 @@
 				padding: 0;
 				margin: 0;
 				font-family: "Roboto", serif;
+				background-color: #eee;
 			}
 
 			.btn {
@@ -31,6 +33,12 @@
 				-webkit-user-select: none;
 				-ms-user-select: none;
 				user-select: none;
+			}
+
+			.default-shadow {
+				-webkit-box-shadow: 0px 0px 13px -3px rgba(0, 0, 0, 0.75);
+				-moz-box-shadow: 0px 0px 13px -3px rgba(0, 0, 0, 0.75);
+				box-shadow: 0px 0px 13px -3px rgba(0, 0, 0, 0.75);
 			}
 
 			main {
@@ -52,6 +60,7 @@
 			#board {
 				border: 1px solid;
 				width: fit-content;
+				background-color: white;
 			}
 
 			.row {
@@ -73,57 +82,60 @@
 				margin-left: 10vw;
 				display: flex;
 				flex-direction: column;
-				border: 1px solid;
 				padding: 50px;
+				background-color: white;
+				border-radius: 10px;
 			}
 
 			.controller-section {
 				margin-top: 20px;
 			}
 
+			.controller-btns div {
+				margin-bottom: 10px;
+			}
+
 			#presets-controller-section {
 				display: flex;
 				flex-direction: column;
 			}
+
+			#loadingScreen {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, 0.8);
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				color: white;
+				font-family: Arial, sans-serif;
+				font-size: 2rem;
+				z-index: 1000;
+			}
 		</style>
 	</head>
 	<body>
+		<div id="loadingScreen">
+			Loading...
+
+			<span id="additional-notes"></span>
+		</div>
+
 		<main>
-			<span>
-				<h1>Conways Game of Life</h1>
-				<ul>
-					<li>
-						<strong>Survival:</strong> A live cell with
-						<strong>2 or 3 live neighbors</strong> stays alive to the next
-						generation.
-					</li>
-					<li>
-						<strong>Death by Underpopulation:</strong> A live cell with
-						<strong>fewer than 2 live neighbors</strong> dies in the next
-						generation.
-					</li>
-					<li>
-						<strong>Death by Overpopulation:</strong> A live cell with
-						<strong>more than 3 live neighbors</strong> dies in the next
-						generation.
-					</li>
-					<li>
-						<strong>Birth:</strong> A dead cell with
-						<strong>exactly 3 live neighbors</strong> becomes a live cell in the
-						next generation.
-					</li>
-				</ul>
-			</span>
+			<h1>Conways Game of Life</h1>
 
 			<content class="board-wrapper">
-				<div id="board"></div>
+				<div id="board" class="default-shadow"></div>
 
-				<div id="controller">
+				<div id="controller" class="default-shadow">
 					<span class="controller-section" id="presets-controller-section">
 						presets
 						<select name="presets" id="presets">
 							<option value="null">Select a Preset</option>
-							<option value="random">Random</option>
+							<option value="random" selected>Random</option>
 						</select>
 					</span>
 
@@ -137,21 +149,51 @@
 						<label for="speed">Speed (ms)</label>
 					</span>
 
-					<span class="controller-section">
+					<span class="controller-section controller-btns">
 						<div id="start-stop-button" class="btn">start/stop</div>
 						<div id="step-button" class="btn">step</div>
 						<div id="clear-button" class="btn">clear</div>
 					</span>
+
+					<span class="controller-section" id="iteration">
+						Generation: <span id="iteration-number">0</span>
+					</span>
 				</div>
 			</content>
+
+			<ul>
+				<li>
+					<strong>Survival:</strong> A live cell with
+					<strong>2 or 3 live neighbors</strong> stays alive to the next
+					generation.
+				</li>
+				<li>
+					<strong>Death by Underpopulation:</strong> A live cell with
+					<strong>fewer than 2 live neighbors</strong> dies in the next
+					generation.
+				</li>
+				<li>
+					<strong>Death by Overpopulation:</strong> A live cell with
+					<strong>more than 3 live neighbors</strong> dies in the next
+					generation.
+				</li>
+				<li>
+					<strong>Birth:</strong> A dead cell with
+					<strong>exactly 3 live neighbors</strong> becomes a live cell in the
+					next generation.
+				</li>
+			</ul>
 		</main>
 	</body>
 	<script>
 		const size = 20;
 		const sleepTime = 400;
-		const checkRoute = "http://localhost:8080/check";
-		const generateRoute = "http://localhost:8080/generate-random";
-		const getPresetsRoute = "http://localhost:8080/get-presets";
+
+		const serverAddress = "http://localhost:8080";
+		const checkRoute = `${serverAddress}/check`;
+		const generateRoute = `${serverAddress}/generate-random`;
+		const getPresetsRoute = `${serverAddress}/get-presets`;
+		const healthCheckRoute = `${serverAddress}/healthz`;
 
 		const boardEl = document.getElementById("board");
 		const presetsEl = document.getElementById("presets");
@@ -160,6 +202,8 @@
 		const useToroidalEl = document.getElementById("use-toroidal");
 		const stepBtnEl = document.getElementById("step-button");
 		const clearBtnEl = document.getElementById("clear-button");
+		const iterationNumberEl = document.getElementById("iteration-number");
+		const loadingNotesEl = document.getElementById("additional-notes");
 
 		var matrix = [];
 		var presets = [];
@@ -167,6 +211,22 @@
 		var speed = 400;
 		let intervalId;
 		let useToroidal = false;
+		let iteration = 0;
+		var serverPingWasSuccessful = false;
+
+		window.addEventListener("load", () => {
+			const loadingScreen = document.getElementById("loadingScreen");
+			function checkServer() {
+				if (healthCheck() === true) {
+					loadingScreen.style.display = "none";
+				} else {
+					loadingNotesEl.innerText = "Cannot connect to server";
+					setTimeout(checkServer, 100);
+				}
+			}
+
+			checkServer();
+		});
 
 		startStopBtnEl.addEventListener("click", (e) => {
 			console.log("start stop button clicked");
@@ -217,6 +277,19 @@
 
 				boardEl.appendChild(row);
 			}
+		}
+
+		function healthCheck() {
+			fetch(healthCheckRoute)
+				.then(() => {
+					serverPingWasSuccessful = true;
+				})
+				.catch((e) => {
+					console.error(e);
+					serverPingWasSuccessful = false;
+				});
+
+			return serverPingWasSuccessful;
 		}
 
 		function configure() {
@@ -287,6 +360,12 @@
 				for (var j = 0; j < matrix[i].length; j++) matrix[i][j] = 0;
 		}
 
+		function increaseIteration() {
+			iteration++;
+
+			iterationNumberEl.innerText = iteration;
+		}
+
 		function update() {
 			var route = `${checkRoute}?use_toroidal=${useToroidal}`;
 			console.log(route);
@@ -303,6 +382,8 @@
 					draw();
 				})
 				.catch((e) => console.error(e));
+
+			increaseIteration();
 		}
 
 		function startLoop() {

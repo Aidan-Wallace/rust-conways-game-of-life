@@ -38,6 +38,7 @@ async fn main() -> std::io::Result<()> {
             .service(generate_random)
             .service(update_board)
             .service(get_presets)
+            .service(health_check)
     })
     .bind((host, port))?
     .run()
@@ -69,6 +70,11 @@ async fn generate_random(query: web::Query<GenerateRandom>) -> impl Responder {
     let result = matrix::Matrix::generate_random_binary(query.width, query.height);
 
     web::Json(result.data)
+}
+
+#[get("/healthz")]
+async fn health_check() -> impl Responder {
+    HttpResponse::Ok().body("Ok")
 }
 
 #[get("/")]

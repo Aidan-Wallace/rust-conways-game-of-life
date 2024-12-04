@@ -9,6 +9,9 @@ fn main() {
     dotenv().ok();
 
     let source_grid_path = env::var("SOURCE_GRID_PATH").unwrap_or("".to_string());
+    let use_toroidal = env::var("USE_TOROIDAL")
+        .map(|v| v.to_lowercase() == "true")
+        .unwrap_or(false);
     let sleep_time = match env::var("SLEEP_TIME_MS")
         .unwrap_or(SLEEP_TIME_MS.to_string())
         .parse()
@@ -31,17 +34,19 @@ fn main() {
         }
     };
 
-    game_loop(matrix, sleep_time)
+    game_loop(matrix, sleep_time, use_toroidal)
 }
 
-fn game_loop(matrix: Matrix, sleep_time: u64) -> ! {
+fn game_loop(matrix: Matrix, sleep_time: u64, use_toroidal: bool) -> ! {
     let mut gb: Matrix = matrix;
 
+    let mut iter = 0;
     loop {
-        gb.print();
+        gb.print(iter);
 
-        game_of_life::convert(&mut gb);
+        game_of_life::convert(&mut gb, use_toroidal);
 
+        iter += 1;
         thread::sleep(Duration::from_millis(sleep_time));
     }
 }

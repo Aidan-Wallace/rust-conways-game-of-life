@@ -11,4 +11,9 @@ pub struct GenerateRandom {
 }
 
 #[derive(Deserialize)]
+pub struct CheckGameBoardOptions {
+    pub use_toroidal: Option<bool>,
+}
+
+#[derive(Deserialize)]
 pub struct InputData(pub Vec<Vec<u8>>);

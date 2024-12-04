@@ -2,7 +2,7 @@ mod data;
 
 use actix_cors::Cors;
 use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
-use data::{AppState, GenerateRandom, InputData};
+use data::{AppState, CheckGameBoardOptions, GenerateRandom, InputData};
 use game_of_life::matrix;
 use std::{env, fs};
 
@@ -44,10 +44,14 @@ async fn main() -> std::io::Result<()> {
 }
 
 #[post("/check")]
-async fn update_board(input: web::Json<InputData>) -> impl Responder {
-    let mut matrix = matrix::Matrix::new(input.into_inner().0);
+async fn update_board(
+    query: web::Query<CheckGameBoardOptions>,
+    input: web::Json<InputData>,
+) -> impl Responder {
+    let input = input.into_inner();
+    let mut matrix = matrix::Matrix::new(input.0);
 
-    game_of_life::convert(&mut matrix);
+    game_of_life::convert(&mut matrix, query.use_toroidal.unwrap_or(false));
 
     web::Json(matrix.data)
 }
@@ -59,7 +63,6 @@ async fn generate_random(query: web::Query<GenerateRandom>) -> impl Responder {
 }
 
 async fn index(data: web::Data<AppState>) -> impl Responder {
-    // Return the HTML content as a response
     HttpResponse::Ok()
         .content_type("text/html")
         .body(data.html.clone())

@@ -45,17 +45,22 @@ impl Matrix {
         }
     }
 
-    pub fn get_bordering_cells(&self, x: usize, y: usize) -> Vec<u8> {
+    pub fn get_bordering_cells(&self, x: usize, y: usize, use_toroidal: bool) -> Vec<u8> {
         let mut neighbors = Vec::new();
-        let rows = self.data.len();
+        let rows = self.data.len() as isize;
 
         for (dx, dy) in OFFSETS {
-            let cols = self.data[0].len();
+            let cols = self.data[0].len() as isize;
 
-            let new_x = x as isize + dx;
-            let new_y = y as isize + dy;
+            let mut new_x = x as isize + dx;
+            let mut new_y = y as isize + dy;
 
-            if new_x >= 0 && new_y >= 0 && new_x < rows as isize && new_y < cols as isize {
+            if use_toroidal {
+                new_x = (new_x + cols as isize) % cols as isize;
+                new_y = (new_y + rows as isize) % rows as isize;
+
+                neighbors.push(self.data[new_y as usize][new_x as usize]);
+            } else if new_x >= 0 && new_y >= 0 && new_x < cols && new_y < rows {
                 neighbors.push(self.data[new_y as usize][new_x as usize]);
             }
         }
@@ -63,7 +68,7 @@ impl Matrix {
         neighbors
     }
 
-    pub fn print(&self) {
+    pub fn print(&self, iter: u64) {
         print!("\x1B[2J\x1B[H");
         let w = self.data.len();
 
@@ -89,7 +94,7 @@ impl Matrix {
         }
 
         // print bottom border
-        println!("┗{}┛", "━".repeat(w * 2));
+        println!("┗{}┛ iter: {}", "━".repeat(w * 2), iter);
     }
 }
 
@@ -106,7 +111,7 @@ mod tests {
             vec![13, 14, 15, 16],
         ]);
 
-        let result = matrix.get_bordering_cells(1, 2);
+        let result = matrix.get_bordering_cells(1, 2, false);
         assert_eq!(result, vec![5, 6, 7, 9, 11, 13, 14, 15]);
     }
 
@@ -119,7 +124,7 @@ mod tests {
             vec![13, 14, 15, 16],
         ]);
 
-        let result = matrix.get_bordering_cells(1, 0);
+        let result = matrix.get_bordering_cells(1, 0, false);
         assert_eq!(result, vec![1, 3, 5, 6, 7]);
     }
 
@@ -132,7 +137,32 @@ mod tests {
             vec![13, 14, 15, 16],
         ]);
 
-        let result = matrix.get_bordering_cells(0, 0);
+        let result = matrix.get_bordering_cells(0, 0, false);
         assert_eq!(result, vec![2, 5, 6]);
+    }
+
+    #[test]
+    fn get_bordering_cells_with_toroidal_works() {
+        let matrix = Matrix::new(vec![
+            vec![1, 2, 3, 4],
+            vec![5, 6, 7, 8],
+            vec![9, 10, 11, 12],
+            vec![13, 14, 15, 16],
+        ]);
+
+        let result = matrix.get_bordering_cells(3, 2, true);
+        assert_eq!(result, vec![7, 8, 5, 11, 9, 15, 16, 13]);
+    }
+    #[test]
+    fn get_bordering_cells_with_toroidal_on_corner_works() {
+        let matrix = Matrix::new(vec![
+            vec![1, 2, 3, 4],
+            vec![5, 6, 7, 8],
+            vec![9, 10, 11, 12],
+            vec![13, 14, 15, 16],
+        ]);
+
+        let result = matrix.get_bordering_cells(0, 0, true);
+        assert_eq!(result, vec![16, 13, 14, 4, 2, 8, 5, 6]);
     }
 }

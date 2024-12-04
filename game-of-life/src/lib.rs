@@ -2,19 +2,28 @@ pub mod matrix;
 
 use matrix::Matrix;
 
-pub fn convert(source_matrix: &mut Matrix) {
+pub fn convert(source_matrix: &mut Matrix, use_toroidal: bool) {
     let cop = Matrix::new(source_matrix.data.clone());
+    let x_len = cop.data.len();
 
-    for x in 0..cop.data.len() {
-        for y in 0..cop.data[x].len() {
-            let cells_border = cop.get_bordering_cells(x, y);
-            let counts = count_zeros_and_ones(&cells_border);
+    for x in 0..x_len {
+        let y_len = cop.data[x].len();
 
-            let z = cop.get_value(x, y).expect("failed to get value of cell");
+        for y in 0..y_len {
+            let cells_border = cop.get_bordering_cells(x, y, use_toroidal);
+            let num_living_cells = count_living_cells(&cells_border);
 
-            let new_val = determine_cell_value(z, counts.1);
+            let current_cell_value = cop.get_value(x, y).expect("failed to get value of cell");
+            let new_cell_val = determine_cell_value(current_cell_value, num_living_cells);
 
-            source_matrix.data[y][x] = new_val;
+            if use_toroidal && new_cell_val == 1 {
+                let new_y = (y + y_len) % y_len;
+                let new_x = (x + x_len) % x_len;
+
+                source_matrix.data[new_y][new_x] = new_cell_val;
+            } else {
+                source_matrix.data[y][x] = new_cell_val; // why is this [y][x]?
+            }
         }
     }
 }
@@ -42,10 +51,9 @@ fn determine_cell_value(value: u8, alive_cell_count: usize) -> u8 {
     value
 }
 
-fn count_zeros_and_ones(data: &Vec<u8>) -> (usize, usize) {
-    let count_zeros = data.iter().filter(|&&x| x == 0).count();
+fn count_living_cells(data: &Vec<u8>) -> usize {
     let count_ones = data.iter().filter(|&&x| x == 1).count();
-    (count_zeros, count_ones)
+    count_ones
 }
 
 #[cfg(test)]
@@ -72,9 +80,9 @@ mod tests {
             vec![0, 0, 0, 0, 0, 0],
         ];
 
-        convert(&mut matrix);
+        convert(&mut matrix, false);
 
-        matrix.print();
+        matrix.print(1);
         assert_eq!(matrix.data, expected);
     }
 
@@ -115,10 +123,10 @@ mod tests {
     }
 
     #[test]
-    fn count_zeros_and_ones_works() {
+    fn count_living_cells_works() {
         let data = vec![0, 0, 1, 0, 1];
-        let result = count_zeros_and_ones(&data);
+        let result = count_living_cells(&data);
 
-        assert_eq!(result, (3, 2));
+        assert_eq!(result, 2);
     }
 }

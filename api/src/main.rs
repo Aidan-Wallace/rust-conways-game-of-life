@@ -1,9 +1,10 @@
-mod data;
+mod api_routes;
+mod models;
 
 use actix_cors::Cors;
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use data::{AppState, CheckGameBoardOptions, GenerateRandom, GolPreset, InputData};
-use game_of_life::matrix;
+use actix_files::Files;
+use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
+use models::{AppState, GolPreset};
 use std::{env, fs, path::Path};
 
 const HOST: &str = "127.0.0.1";
@@ -11,8 +12,16 @@ const DEFAULT_PORT: u16 = 8080;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env::set_var("RUST_LOG", "debug");
+    env::set_var("RUST_BACKTRACE", "1");
+
+    env_logger::init();
+
     let host = env::var("HOST").unwrap_or(HOST.to_string());
-    let port = match env::var("PORT").unwrap_or(DEFAULT_PORT.to_string()).parse() {
+    let port = match env::var("DEFAULT_PORT")
+        .unwrap_or(DEFAULT_PORT.to_string())
+        .parse()
+    {
         Ok(value) => value,
         Err(_) => {
             eprintln!(
@@ -22,59 +31,33 @@ async fn main() -> std::io::Result<()> {
             DEFAULT_PORT
         }
     };
+    let html_file_fp = env::var("HTML_FILE_FP").unwrap_or("./api/templates/index.html".to_string());
+    let static_dir_fp = env::var("STATIC_DIR_FP").unwrap_or("./api/static".to_string());
+    let presets_file_fp = env::var("PRESETS_FILE_FP").unwrap_or("./presets.json".to_string());
 
-    HttpServer::new(|| {
+    let state = AppState {
+        html: match fs::read_to_string(&html_file_fp) {
+            Ok(content) => content,
+            Err(_) => {
+                panic!("Could not read html from {}", html_file_fp)
+            }
+        },
+        preset_matrixes: load_json(presets_file_fp.to_string()),
+    };
+
+    HttpServer::new(move || {
+        let logger = Logger::default();
         App::new()
             .wrap(Cors::permissive())
-            .app_data(web::Data::new(AppState {
-                html: match fs::read_to_string("index.html") {
-                    Ok(content) => content,
-                    Err(_) => {
-                        panic!("Could not read html from index.html")
-                    }
-                },
-            }))
+            .wrap(logger)
+            .app_data(web::Data::new(state.clone()))
+            .service(Files::new("/static", &static_dir_fp).show_files_listing())
             .service(index)
-            .service(generate_random)
-            .service(update_board)
-            .service(get_presets)
-            .service(health_check)
+            .service(api_routes::get_router())
     })
     .bind((host, port))?
     .run()
     .await
-}
-
-#[post("/check")]
-async fn update_board(
-    query: web::Query<CheckGameBoardOptions>,
-    input: web::Json<InputData>,
-) -> impl Responder {
-    let input = input.into_inner();
-    let mut matrix = matrix::Matrix::new(input.0);
-
-    game_of_life::convert(&mut matrix, query.use_toroidal.unwrap_or(false));
-
-    web::Json(matrix.data)
-}
-
-#[get("/get-presets")]
-async fn get_presets() -> impl Responder {
-    let data = load_json("presets.json".to_string());
-
-    web::Json(data)
-}
-
-#[get("/generate-random")]
-async fn generate_random(query: web::Query<GenerateRandom>) -> impl Responder {
-    let result = matrix::Matrix::generate_random_binary(query.width, query.height);
-
-    web::Json(result.data)
-}
-
-#[get("/healthz")]
-async fn health_check() -> impl Responder {
-    HttpResponse::Ok().body("Ok")
 }
 
 #[get("/")]

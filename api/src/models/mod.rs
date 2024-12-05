@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone)]
 pub struct AppState {
     pub html: String,
+    pub preset_matrixes: Vec<GolPreset>,
 }
 
 #[derive(Deserialize)]
@@ -15,7 +17,7 @@ pub struct CheckGameBoardOptions {
     pub use_toroidal: Option<bool>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GolPreset {
     pub display_name: String,
@@ -24,4 +26,4 @@ pub struct GolPreset {
 }
 
 #[derive(Deserialize)]
-pub struct InputData(pub Vec<Vec<u8>>);
+pub struct CheckMatrixRequest(pub Vec<Vec<u8>>);

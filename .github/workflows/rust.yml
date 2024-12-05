@@ -1,0 +1,35 @@
+name: "Rust"
+
+on:
+  push:
+    paths:
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+          override: true
+
+      - name: Run rustfmt
+        run: rustfmt --check --edition 2021 $(find . -name "*.rs")
+
+      - name: Run Clippy
+        run: cargo clippy -- -W warnings # use `cargo clippy -- -D warnings` to fail on warnings
+
+      - name: Run Tests
+        run: cargo test
+
+      - name: Build the project
+        run: cargo build --release

@@ -1,0 +1,10 @@
+.devcontainer
+.dockerignore
+.env
+.github
+.gitignore
+.vscode
+docker-compose.yml
+git
+readme.md
+target

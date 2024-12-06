@@ -67,6 +67,34 @@ clearBtnEl.addEventListener("click", (e) => {
     draw();
 });
 
+presetsEl.addEventListener("change", () => {
+    if (presetsEl.value == "random") {
+        ApiServices.generateRandom()
+            .then((y) => {
+                matrix = y;
+                draw();
+            })
+            .catch((e) => console.error(e));
+
+        return;
+    }
+
+    var target = presets.find((x) => x.id == presetsEl.value).matrix;
+
+    const startX = Math.floor((matrix.length - target.length) / 2);
+    const startY = Math.floor(
+        (matrix[0].length - target[0].length) / 2
+    );
+
+    clearMatrix();
+
+    for (let i = 0; i < target.length; i++)
+        for (let j = 0; j < target[i].length; j++)
+            matrix[startX + i][startY + j] = target[i][j];
+
+    draw();
+});
+
 function draw() {
     boardEl.innerHTML = "";
 
@@ -101,13 +129,6 @@ function healthCheck() {
 }
 
 function configure() {
-    ApiServices.generateRandom()
-        .then((y) => {
-            matrix = y;
-            draw();
-        })
-        .catch((e) => console.error(e));
-
     ApiServices.getPresets()
         .then((y) => {
             presets = y;
@@ -120,36 +141,16 @@ function configure() {
 
                 presetsEl.appendChild(el);
             }
-
-            presetsEl.addEventListener("change", () => {
-                if (presetsEl.value == "random") {
-                    ApiServices.generateRandom()
-                        .then((y) => {
-                            matrix = y;
-                            draw();
-                        })
-                        .catch((e) => console.error(e));
-
-                    return;
-                }
-
-                var target = presets.find((x) => x.id == presetsEl.value).matrix;
-
-                const startX = Math.floor((matrix.length - target.length) / 2);
-                const startY = Math.floor(
-                    (matrix[0].length - target[0].length) / 2
-                );
-
-                clearMatrix();
-
-                for (let i = 0; i < target.length; i++)
-                    for (let j = 0; j < target[i].length; j++)
-                        matrix[startX + i][startY + j] = target[i][j];
-
-                draw();
-            });
         })
         .catch((e) => console.error(e));
+
+    ApiServices.generateRandom()
+        .then((y) => {
+            matrix = y;
+            draw();
+        })
+        .catch((e) => console.error(e));
+
 }
 
 function clearMatrix() {

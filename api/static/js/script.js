@@ -1,11 +1,6 @@
 const size = 20;
 const sleepTime = 400;
 
-const serverAddress = "/api";
-const checkRoute = `${serverAddress}/check`;
-const generateRoute = `${serverAddress}/generate-random`;
-const getPresetsRoute = `${serverAddress}/get-presets`;
-const healthCheckRoute = `${serverAddress}/healthz`;
 
 const boardEl = document.getElementById("board");
 const presetsEl = document.getElementById("presets");
@@ -93,7 +88,7 @@ function draw() {
 }
 
 function healthCheck() {
-    fetch(healthCheckRoute)
+    ApiServices.healthCheck()
         .then(() => {
             serverPingWasSuccessful = true;
         })
@@ -106,18 +101,14 @@ function healthCheck() {
 }
 
 function configure() {
-    var route = `${generateRoute}?width=${size}&height=${size}`;
-
-    fetch(route)
-        .then((x) => x.json())
+    ApiServices.generateRandom()
         .then((y) => {
             matrix = y;
             draw();
         })
         .catch((e) => console.error(e));
 
-    fetch(getPresetsRoute)
-        .then((x) => x.json())
+    ApiServices.getPresets()
         .then((y) => {
             presets = y;
 
@@ -132,8 +123,7 @@ function configure() {
 
             presetsEl.addEventListener("change", () => {
                 if (presetsEl.value == "random") {
-                    fetch(route)
-                        .then((x) => x.json())
+                    ApiServices.generateRandom()
                         .then((y) => {
                             matrix = y;
                             draw();
@@ -178,16 +168,7 @@ function increaseIteration() {
 }
 
 function update() {
-    var route = `${checkRoute}?use_toroidal=${useToroidal}`;
-
-    fetch(route, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(matrix),
-    })
-        .then((x) => x.json())
+    ApiServices.check(matrix, useToroidal)
         .then((y) => {
             matrix = y;
 
@@ -203,6 +184,42 @@ function startLoop() {
     intervalId = setInterval(() => {
         if (isRunning) update();
     }, speed);
+}
+
+class ApiServices {
+    static serverAddress = "/api";
+    static postHeaders = {
+        "Content-Type": "application/json",
+    };
+
+    static check = async (matrix, useToroidal = false) => {
+        const route = `${this.serverAddress}/check?use_toroidal=${useToroidal}`;
+
+        const response = await fetch(route, {
+            method: "POST",
+            headers: this.postHeaders,
+            body: JSON.stringify(matrix),
+        });
+
+        return await response.json();
+    }
+    static generateRandom = async (w = 20, h = 20) => {
+        const route = `${this.serverAddress}/generate-random?width=${w}&height=${h}`;
+        const response = await fetch(route);
+        return await response.json();
+
+    }
+
+    static getPresets = async () => {
+        const route = `${this.serverAddress}/get-presets`;
+        const response = await fetch(route);
+        return await response.json();
+    }
+
+    static healthCheck = () => {
+        const route = `${this.serverAddress}/healthz`;
+        return fetch(route);
+    }
 }
 
 configure();

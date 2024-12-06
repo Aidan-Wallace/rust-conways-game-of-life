@@ -81,9 +81,7 @@ presetsEl.addEventListener("change", () => {
     var target = presets.find((x) => x.id == presetsEl.value).matrix;
 
     const startX = Math.floor((matrix.length - target.length) / 2);
-    const startY = Math.floor(
-        (matrix[0].length - target[0].length) / 2
-    );
+    const startY = Math.floor((matrix[0].length - target[0].length) / 2);
 
     clearMatrix();
 
@@ -97,12 +95,16 @@ presetsEl.addEventListener("change", () => {
 function update() {
     ApiServices.check(matrix, useToroidal)
         .then((y) => {
+            lastMatrix = [...matrix];
             matrix = y;
 
             draw();
             increaseIteration();
 
-            lastMatrix = matrix;
+
+            if (matrixesAreSame(matrix, lastMatrix)) {
+                isRunning = false;
+            }
         })
         .catch((e) => console.error(e));
 }
@@ -129,7 +131,6 @@ function configure() {
             draw();
         })
         .catch((e) => console.error(e));
-
 }
 
 function draw() {
@@ -156,6 +157,22 @@ function startLoop() {
     intervalId = setInterval(() => {
         if (isRunning) update();
     }, speed);
+}
+
+function matrixesAreSame(m1, m2) {
+    if (m1.length !== m2.length)
+        return false;
+
+    for (let i = 0; i < m1.length; i++) {
+        if (m1[i].length !== m2[i].length)
+            return false;
+
+        for (let j = 0; j < m1[i].length; j++)
+            if (m1[i][j] !== m2[i][j])
+                return false;
+    }
+
+    return true;
 }
 
 function clearMatrix() {
@@ -201,24 +218,24 @@ class ApiServices {
         });
 
         return await response.json();
-    }
+    };
+
     static generateRandom = async (w = 20, h = 20) => {
         const route = `${this.serverAddress}/generate-random?width=${w}&height=${h}`;
         const response = await fetch(route);
         return await response.json();
-
-    }
+    };
 
     static getPresets = async () => {
         const route = `${this.serverAddress}/get-presets`;
         const response = await fetch(route);
         return await response.json();
-    }
+    };
 
     static healthCheck = () => {
         const route = `${this.serverAddress}/healthz`;
         return fetch(route);
-    }
+    };
 }
 
 configure();

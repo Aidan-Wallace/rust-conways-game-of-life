@@ -114,6 +114,16 @@ cargo run --bin console
 
 This project includes a Rust development container for Visual Studio Code. To use it, ensure you have the Remote - Containers extension installed.
 
+To enable hot reloading, install `cargo-watch`
+
+```sh
+# install with
+cargo install cargo-watch
+
+# run with
+cargo watch -x '--bin api'
+```
+
 # References
 
 - [Unicode characters](https://en.wikipedia.org/wiki/Box-drawing_characters) for grids

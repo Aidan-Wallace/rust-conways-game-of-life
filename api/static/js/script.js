@@ -1,7 +1,6 @@
 const size = 20;
 const sleepTime = 400;
 
-
 const boardEl = document.getElementById("board");
 const presetsEl = document.getElementById("presets");
 const startStopBtnEl = document.getElementById("start-stop-button");
@@ -95,37 +94,17 @@ presetsEl.addEventListener("change", () => {
     draw();
 });
 
-function draw() {
-    boardEl.innerHTML = "";
+function update() {
+    ApiServices.check(matrix, useToroidal)
+        .then((y) => {
+            matrix = y;
 
-    for (var i = 0; i < matrix.length; i++) {
-        var row = document.createElement("div");
-        row.classList.add("row");
+            draw();
+            increaseIteration();
 
-        for (var j = 0; j < matrix[i].length; j++) {
-            var el = document.createElement("div");
-            el.classList.add("cell");
-
-            if (matrix[i][j] == 1) el.classList.add("alive");
-
-            row.appendChild(el);
-        }
-
-        boardEl.appendChild(row);
-    }
-}
-
-function healthCheck() {
-    ApiServices.healthCheck()
-        .then(() => {
-            serverPingWasSuccessful = true;
+            lastMatrix = matrix;
         })
-        .catch((e) => {
-            console.error(e);
-            serverPingWasSuccessful = false;
-        });
-
-    return serverPingWasSuccessful;
+        .catch((e) => console.error(e));
 }
 
 function configure() {
@@ -153,6 +132,32 @@ function configure() {
 
 }
 
+function draw() {
+    boardEl.innerHTML = "";
+
+    for (var i = 0; i < matrix.length; i++) {
+        var row = document.createElement("div");
+        row.classList.add("row");
+
+        for (var j = 0; j < matrix[i].length; j++) {
+            var el = document.createElement("div");
+            el.classList.add("cell");
+
+            if (matrix[i][j] == 1) el.classList.add("alive");
+
+            row.appendChild(el);
+        }
+
+        boardEl.appendChild(row);
+    }
+}
+
+function startLoop() {
+    intervalId = setInterval(() => {
+        if (isRunning) update();
+    }, speed);
+}
+
 function clearMatrix() {
     for (var i = 0; i < matrix.length; i++)
         for (var j = 0; j < matrix[i].length; j++) matrix[i][j] = 0;
@@ -164,27 +169,20 @@ function clearMatrix() {
 
 function increaseIteration() {
     iteration++;
-
     iterationNumberEl.innerText = iteration;
 }
 
-function update() {
-    ApiServices.check(matrix, useToroidal)
-        .then((y) => {
-            matrix = y;
-
-            draw();
-            increaseIteration();
-
-            lastMatrix = matrix;
+function healthCheck() {
+    ApiServices.healthCheck()
+        .then(() => {
+            serverPingWasSuccessful = true;
         })
-        .catch((e) => console.error(e));
-}
+        .catch((e) => {
+            console.error(e);
+            serverPingWasSuccessful = false;
+        });
 
-function startLoop() {
-    intervalId = setInterval(() => {
-        if (isRunning) update();
-    }, speed);
+    return serverPingWasSuccessful;
 }
 
 class ApiServices {

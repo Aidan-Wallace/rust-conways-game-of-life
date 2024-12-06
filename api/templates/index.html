@@ -11,7 +11,7 @@
 			rel="stylesheet"
 		/>
 		<link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
-		<link rel="stylesheet" href="/static/css/style.css">
+		<link rel="stylesheet" href="/static/css/style.css" />
 	</head>
 	<body>
 		<div id="loadingScreen">
@@ -102,6 +102,7 @@
 		const loadingNotesEl = document.getElementById("additional-notes");
 
 		var matrix = [];
+		var lastMatrix = [];
 		var presets = [];
 		var isRunning = false;
 		var speed = 400;
@@ -125,31 +126,31 @@
 		});
 
 		startStopBtnEl.addEventListener("click", (e) => {
-			console.log("start stop button clicked");
+			console.debug("start stop button clicked");
 			e.preventDefault();
 			isRunning = !isRunning;
 		});
 
 		speedEl.addEventListener("change", (e) => {
-			console.log("update speed changed");
+			console.debug("update speed changed");
 			clearInterval(intervalId);
 			speed = e.target.value;
 			startLoop();
 		});
 
 		useToroidalEl.addEventListener("change", (e) => {
-			console.log("use-toroidal button clicked");
+			console.debug("use-toroidal button clicked");
 			useToroidal = e.target.checked;
 		});
 
 		stepBtnEl.addEventListener("click", (e) => {
-			console.log("step button clicked");
+			console.debug("step button clicked");
 			e.preventDefault();
 			update();
 		});
 
 		clearBtnEl.addEventListener("click", (e) => {
-			console.log("clear button clicked");
+			console.debug("clear button clicked");
 			e.preventDefault();
 			clearMatrix();
 			draw();
@@ -204,8 +205,6 @@
 				.then((y) => {
 					presets = y;
 
-					console.log(presets);
-
 					for (var i = 0; i < presets.length; i++) {
 						var el = document.createElement("option");
 
@@ -216,14 +215,10 @@
 					}
 
 					presetsEl.addEventListener("change", () => {
-						console.log(presetsEl.value);
-
 						if (presetsEl.value == "random") {
 							fetch(route)
 								.then((x) => x.json())
 								.then((y) => {
-									console.log("y");
-									console.log(y);
 									matrix = y;
 									draw();
 								})
@@ -254,6 +249,10 @@
 		function clearMatrix() {
 			for (var i = 0; i < matrix.length; i++)
 				for (var j = 0; j < matrix[i].length; j++) matrix[i][j] = 0;
+
+			lastMatrix = [];
+			iteration = 0;
+			isRunning = false;
 		}
 
 		function increaseIteration() {
@@ -264,7 +263,7 @@
 
 		function update() {
 			var route = `${checkRoute}?use_toroidal=${useToroidal}`;
-			console.log(route);
+
 			fetch(route, {
 				method: "POST",
 				headers: {
@@ -275,11 +274,13 @@
 				.then((x) => x.json())
 				.then((y) => {
 					matrix = y;
+
 					draw();
+					increaseIteration();
+
+					lastMatrix = matrix;
 				})
 				.catch((e) => console.error(e));
-
-			increaseIteration();
 		}
 
 		function startLoop() {

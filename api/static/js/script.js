@@ -11,15 +11,15 @@ const clearBtnEl = document.getElementById("clear-button");
 const iterationNumberEl = document.getElementById("iteration-number");
 const loadingNotesEl = document.getElementById("additional-notes");
 
-var matrix = [];
-var lastMatrix = [];
-var presets = [];
-var isRunning = false;
-var speed = 400;
+let matrix = [];
+let lastMatrix = [];
+let presets = [];
+let isRunning = false;
+let speed = 400;
 let intervalId;
 let useToroidal = false;
 let iteration = 0;
-var serverPingWasSuccessful = false;
+let serverPingWasSuccessful = false;
 
 window.addEventListener("load", () => {
     const loadingScreen = document.getElementById("loadingScreen");
@@ -78,7 +78,7 @@ presetsEl.addEventListener("change", () => {
         return;
     }
 
-    var target = presets.find((x) => x.id == presetsEl.value).matrix;
+    let target = presets.find((x) => x.id == presetsEl.value).matrix;
 
     const startX = Math.floor((matrix.length - target.length) / 2);
     const startY = Math.floor((matrix[0].length - target[0].length) / 2);
@@ -114,8 +114,8 @@ function configure() {
         .then((y) => {
             presets = y;
 
-            for (var i = 0; i < presets.length; i++) {
-                var el = document.createElement("option");
+            for (let i = 0; i < presets.length; i++) {
+                let el = document.createElement("option");
 
                 el.value = presets[i].id;
                 el.innerText = presets[i].displayName;
@@ -135,36 +135,41 @@ function configure() {
 
 function draw() {
     boardEl.innerHTML = "";
+    matrix.forEach((row, i) => {
+        const rowEl = createRow(row, i);
+        boardEl.appendChild(rowEl);
+    });
+}
 
-    for (let i = 0; i < matrix.length; i++) {
-        let row = document.createElement("div");
-        row.classList.add("row");
+function createRow(row, rowIndex) {
+    const rowEl = document.createElement("div");
+    rowEl.classList.add("row");
 
-        for (let j = 0; j < matrix[i].length; j++) {
-            let el = document.createElement("div");
-            el.classList.add("cell");
-            el.setAttribute("pos", `[${i}, ${j}]`)
+    row.forEach((cell, j) => {
+        const cellEl = createCell(cell, rowIndex, j);
+        rowEl.appendChild(cellEl);
+    });
 
-            el.addEventListener('click', (event) => {
-                console.log(`Cell clicked at Row: ${i}, Column: ${j}`);
+    return rowEl;
+}
 
-                matrix[i][j] = matrix[i][j] == 1 ? 0 : 1;
+function createCell(cell, rowIndex, colIndex) {
+    const cellEl = document.createElement("div");
+    cellEl.classList.add("cell");
 
-                if (matrix[i][j] == 1) {
-                    console.log("on")
-                    el.classList.add("alive")
-                } else {
-                    console.log("off")
-                    el.classList.remove("alive")
-                };
-            });
+    if (cell === 1) cellEl.classList.add("alive");
 
-            if (matrix[i][j] == 1) el.classList.add("alive");
+    cellEl.addEventListener('click', () => toggleCell(cellEl, rowIndex, colIndex));
+    return cellEl;
+}
 
-            row.appendChild(el);
-        }
+function toggleCell(cellEl, rowIndex, colIndex) {
+    matrix[rowIndex][colIndex] = matrix[rowIndex][colIndex] === 1 ? 0 : 1;
 
-        boardEl.appendChild(row);
+    if (matrix[rowIndex][colIndex] === 1) {
+        cellEl.classList.add("alive");
+    } else {
+        cellEl.classList.remove("alive");
     }
 }
 
@@ -191,8 +196,7 @@ function matrixesAreSame(m1, m2) {
 }
 
 function clearMatrix() {
-    for (var i = 0; i < matrix.length; i++)
-        for (var j = 0; j < matrix[i].length; j++) matrix[i][j] = 0;
+    matrix.forEach((row, i) => row.forEach((_, j) => matrix[i][j] = 0));
 
     lastMatrix = [];
     iteration = 0;
@@ -225,31 +229,50 @@ class ApiServices {
 
     static check = async (matrix, useToroidal = false) => {
         const route = `${this.serverAddress}/check?use_toroidal=${useToroidal}`;
-
-        const response = await fetch(route, {
-            method: "POST",
-            headers: this.postHeaders,
-            body: JSON.stringify(matrix),
-        });
-
-        return await response.json();
+        try {
+            const response = await fetch(route, {
+                method: "POST",
+                headers: this.postHeaders,
+                body: JSON.stringify(matrix),
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error in check:", error);
+            throw error;
+        }
     };
 
     static generateRandom = async (w = 20, h = 20) => {
         const route = `${this.serverAddress}/generate-random?width=${w}&height=${h}`;
-        const response = await fetch(route);
-        return await response.json();
+        try {
+            const response = await fetch(route);
+            return await response.json();
+        } catch (error) {
+            console.error("Error in generateRandom:", error);
+            throw error;
+        }
     };
 
     static getPresets = async () => {
         const route = `${this.serverAddress}/get-presets`;
-        const response = await fetch(route);
-        return await response.json();
+        try {
+            const response = await fetch(route);
+            return await response.json();
+        } catch (error) {
+            console.error("Error in getPresets:", error);
+            throw error;
+        }
     };
 
-    static healthCheck = () => {
+    static healthCheck = async () => {
         const route = `${this.serverAddress}/healthz`;
-        return fetch(route);
+        try {
+            const response = await fetch(route);
+            return response.text();
+        } catch (error) {
+            console.error("Error in healthCheck:", error);
+            throw error;
+        }
     };
 }
 

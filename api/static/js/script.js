@@ -136,13 +136,28 @@ function configure() {
 function draw() {
     boardEl.innerHTML = "";
 
-    for (var i = 0; i < matrix.length; i++) {
-        var row = document.createElement("div");
+    for (let i = 0; i < matrix.length; i++) {
+        let row = document.createElement("div");
         row.classList.add("row");
 
-        for (var j = 0; j < matrix[i].length; j++) {
-            var el = document.createElement("div");
+        for (let j = 0; j < matrix[i].length; j++) {
+            let el = document.createElement("div");
             el.classList.add("cell");
+            el.setAttribute("pos", `[${i}, ${j}]`)
+
+            el.addEventListener('click', (event) => {
+                console.log(`Cell clicked at Row: ${i}, Column: ${j}`);
+
+                matrix[i][j] = matrix[i][j] == 1 ? 0 : 1;
+
+                if (matrix[i][j] == 1) {
+                    console.log("on")
+                    el.classList.add("alive")
+                } else {
+                    console.log("off")
+                    el.classList.remove("alive")
+                };
+            });
 
             if (matrix[i][j] == 1) el.classList.add("alive");
 

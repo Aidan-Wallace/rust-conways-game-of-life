@@ -41,8 +41,8 @@ startStopBtnEl.addEventListener("click", (e) => {
     isRunning = !isRunning;
 });
 
-speedEl.addEventListener("change", (e) => {
-    console.debug("update speed changed");
+speedEl.addEventListener("input", (e) => {
+    console.debug(`update speed changed to ${e.target.value}`);
     clearInterval(intervalId);
     speed = e.target.value;
     startLoop();

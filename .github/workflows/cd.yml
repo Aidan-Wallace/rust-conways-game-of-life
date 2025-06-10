@@ -1,0 +1,17 @@
+name: CD
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-push-container:
+    uses: aidan-wallace/gh-workflows/.github/workflows/docker-cd.yml@init
+    with:
+      name: "Container Build"
+      dockerfile: "./api/Dockerfile"
+      login-with-ghcr: true
+      push-to-registry: false # TODO: revert me
+      image_name: gol

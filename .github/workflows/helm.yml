@@ -1,0 +1,32 @@
+name: Helm
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - helm/**
+
+jobs:
+  helm-lint-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint Helm charts
+        run: helm lint helm
+
+      - name: Template Helm charts (dry-run)
+        run: helm template helm
+
+      - name: Run helm unittest (if tests exist)
+        run: |
+          if [ -d "helm/tests" ]; then
+            helm plugin install https://github.com/helm-unittest/helm-unittest || true
+            helm unittest helm
+          else
+            echo "No helm unittest tests found, skipping."
+          fi

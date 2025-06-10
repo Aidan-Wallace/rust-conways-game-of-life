@@ -3,5 +3,6 @@ services:
     build:
       dockerfile: ./api/Dockerfile
       context: .
+    image: ghcr.io/aidan-wallace/rust-conways-game-of-life/gol:latest
     ports:
       - 8080:80

@@ -54,7 +54,7 @@ jobs:
         with:
           context: .
           file: ./api/Dockerfile
-          push: false
+          push: true
           cache-from: "type=local,src=/tmp/.buildx-cache"
           cache-to: "type=local,dest=/tmp/.buildx-cache,mode=max"
           tags: ${{ steps.meta.outputs.tags }}

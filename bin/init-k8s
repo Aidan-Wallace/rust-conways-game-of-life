@@ -1,0 +1,19 @@
+#!/bin/bash
+
+for e in ./.env*; do
+    [ -f "$e" ] && source "$e"
+done
+
+CR_PAT=${CR_PAT:? env var is required}
+K8S_NS=${K8S_NS:? env var is required}
+DOCKER_UNAME=${DOCKER_UNAME:? env var is required}
+DOCKER_SERVER=${DOCKER_SERVER:? env var is required}
+K8S_SECRET_NAME=${K8S_SECRET_NAME:? env var is required}
+
+kubectl create ns $K8S_NS
+
+kubectl create secret docker-registry $K8S_SECRET_NAME \
+    --namespace=$K8S_NS \
+    --docker-server=$DOCKER_SERVER \
+    --docker-username=$DOCKER_UNAME \
+    --docker-password=$CR_PAT

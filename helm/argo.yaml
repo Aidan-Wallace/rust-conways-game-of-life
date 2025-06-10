@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: webapp=ghcr.io/aidan-wallace/rust-conways-game-of-life/gol:latest
+    argocd-image-updater.argoproj.io/update-strategy: digest
+    argocd-image-updater.argoproj.io/write-back-method: argocd
+  name: game-of-life
+  namespace: argocd
+spec:
+  destination:
+    namespace: game-of-life
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    helm:
+      parameters:
+        - name: ingress.hosts[0].host
+          value: gol.mayall.local
+      valueFiles:
+        - values.yaml
+    path: helm
+    repoURL: git@github.com:Aidan-Wallace/rust-conways-game-of-life.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

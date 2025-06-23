@@ -30,7 +30,11 @@ service:
 ingress:
   enabled: true
   className: "traefik"
-  annotations: {}
+  annotations:
+    homepage.devaw.io/enabled: "true"
+    homepage.devaw.io/name: "Conways Game of Life"
+    homepage.devaw.io/description: "Conways Game of Life written in Rust"
+    homepage.devaw.io/section: "Personal Applications"
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:

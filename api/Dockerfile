@@ -1,4 +1,4 @@
-FROM rust:1.85 AS build-env
+FROM rust:1.92 AS build-env
 
 WORKDIR /app
 
